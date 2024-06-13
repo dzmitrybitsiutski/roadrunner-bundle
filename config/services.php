@@ -74,7 +74,7 @@ return static function (ContainerConfigurator $container) {
         ->public();
 
     $services->set(InternalHttpWorker::class)
-        ->public() // Manually retrieved on the DIC in the Worker if the kernel has been rebooted
+        ->public()
         ->tag('monolog.logger', ['channel' => PayseraRoadRunnerExtension::MONOLOG_CHANNEL])
         ->args([
             service('kernel'),
