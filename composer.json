@@ -1,0 +1,80 @@
+{
+    "name": "dzmitrybitsiutski/roadrunner-bundle",
+    "type": "symfony-bundle",
+    "description": "A RoadRunner worker as a Symfony Bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dz",
+            "email": "dz@gmail.com"
+        }
+    ],
+    "autoload": {
+        "files": ["src/functions.php"],
+        "psr-4": {
+            "Paysera\\RoadRunnerBundle\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Paysera\\RoadRunnerBundle\\": "tests"
+        }
+    },
+    "require": {
+        "php": ">=8.1",
+        "symfony/config": "^6.0 || ^7.0",
+        "symfony/dependency-injection": "^6.0 || ^7.0",
+        "symfony/http-kernel": "^6.0 || ^7.0",
+        "symfony/yaml": "^6.0 || ^7.0",
+        "spiral/roadrunner": "^2023.1.0 || ^2024.1.0",
+        "spiral/roadrunner-worker": "^3.0.0",
+        "spiral/goridge": "^4.0",
+        "psr/log": "^1.1 || ^2.0 || ^3.0",
+        "spiral/roadrunner-http": "^3.0"
+    },
+    "suggest": {
+        "nyholm/psr7": "For a super lightweight PSR-7/17 implementation",
+        "spiral/roadrunner-cli": "For easy installation of RoadRunner",
+        "symfony/proxy-manager-bridge": "For doctrine re-connection implementation"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^6.0 || ^7.0",
+        "sentry/sentry-symfony": "^4.5 || ^5.0",
+        "symfony/framework-bundle": "^6.0 || ^7.0",
+        "nyholm/psr7": "^1.2",
+        "doctrine/mongodb-odm": "^2.2",
+        "blackfire/php-sdk": "^1.21",
+        "doctrine/doctrine-bundle": "^2.1.1",
+        "doctrine/orm": "^2.7.3",
+        "symfony/proxy-manager-bridge": "^6.0 || ^7.0",
+        "symfony/validator": "^6.0 || ^7.0",
+        "spiral/roadrunner-metrics": "^3.0.0",
+        "mikey179/vfsstream": "^1.6.8",
+        "symfony/runtime": "^6.0 || ^7.0",
+        "symfony/var-exporter": "^6.0 || ^7.0",
+        "laminas/laminas-zendframework-bridge": "^1.4",
+        "spiral/roadrunner-grpc": "^3.0.0",
+        "spiral/roadrunner-kv": "^4.0"
+    },
+    "conflict": {
+        "doctrine/doctrine-bundle": "<2.1.1",
+        "sentry/sentry-symfony": "<4.5.0",
+        "spiral/roadrunner-metrics": "<3.0.0"
+    },
+    "scripts": {
+        "test": "tools/vendor/bin/phpunit --testdox --colors=always",
+        "phpstan": "tools/vendor/bin/phpstan analyse --no-progress --ansi",
+        "cs:lint": "tools/vendor/bin/php-cs-fixer fix --dry-run --diff --ansi --allow-risky=yes",
+        "cs:fix": "tools/vendor/bin/php-cs-fixer fix --ansi --allow-risky=yes",
+        "ci": [
+            "@test", "@phpstan", "@cs:lint"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "symfony/runtime": true,
+            "php-http/discovery": true
+        }
+    }
+}
