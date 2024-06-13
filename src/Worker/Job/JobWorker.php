@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Paysera\RoadRunnerBundle\Worker\Job;
 
 use Emi\Common\Worker\Job\Event\Handler\EventHandlerInterface;
+use Paysera\RoadRunnerBundle\Worker\WorkerInterface;
 use Psr\Log\LoggerInterface;
 use Spiral\RoadRunner\Jobs\ConsumerInterface;
 use Spiral\RoadRunner\Jobs\Exception\JobsException;
