@@ -53,8 +53,8 @@ class PayseraRoadRunnerExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new PhpFileLoader($container, new FileLocator(dirname(__DIR__).'/config'));
-        $loader->load('services.php');
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../config'));
+        $loader->load('services.yaml');
 
         if ($container->getParameter('kernel.debug')) {
             $this->loadDebug($container);
