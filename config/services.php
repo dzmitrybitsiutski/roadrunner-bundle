@@ -134,21 +134,14 @@ return static function (ContainerConfigurator $container) {
             ]);
     }
 
+    // job roadrunner worker
     $services->set(EventHandlerInterface::class, EventHandler::class)
         ->public();
-
-    $services->set(SerializerInterface::class, Serializer::class)
-        ->public()
-        ->args([
-            service(LoggerInterface::class),
-            service(EventTypeRecognizer::class),
-        ]);
 
     $services->set(ConsumerInterface::class, Consumer::class)
         ->public()
         ->args([
-            Worker::create(),
-            service(SerializerInterface::class),
+            service(RoadRunnerWorkerInterface::class),
         ]);
 
     $services->set(InternalJobWorker::class)
