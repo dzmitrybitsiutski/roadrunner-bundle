@@ -1,0 +1,137 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    paysera_road_runner.intercept_side_effect: true
+        
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+
+    Spiral\RoadRunner\EnvironmentInterface:
+        factory: ['@Spiral\RoadRunner\Environment', 'fromGlobals']
+
+    Spiral\RoadRunner\WorkerInterface:
+        class: Spiral\RoadRunner\Worker
+        factory: ['@Spiral\RoadRunner\Worker', 'createFromEnvironment']
+        arguments:
+            $env: '@Spiral\RoadRunner\EnvironmentInterface'
+            $interceptSideEffects: '%paysera_road_runner.intercept_side_effect%'
+            $logger: '@Psr\Log\LoggerInterface'
+
+    Spiral\RoadRunner\Http\HttpWorkerInterface:
+        class: Spiral\RoadRunner\Http\HttpWorker
+        arguments:
+            $worker: '@Spiral\RoadRunner\WorkerInterface'
+
+    Spiral\Goridge\RPC\RPCInterface:
+        factory: [ '@Paysera\RoadRunnerBundle\Helpers\RPCFactory', 'fromEnvironment' ]
+        arguments:
+            $env: '@Spiral\RoadRunner\EnvironmentInterface'
+
+    Spiral\RoadRunner\Metrics\MetricsInterface:
+        class: Spiral\RoadRunner\Metrics\Metrics
+        arguments:
+            $worker: '@Spiral\Goridge\RPC\RPCInterface'
+
+    Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorkerInterface:
+        class: Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorker
+        arguments: '@Spiral\RoadRunner\Http\HttpWorkerInterface'
+
+    Paysera\RoadRunnerBundle\Worker\HttpWorker:
+        public: true
+        tags:
+            - { name: monolog.logger, channel: '@\Paysera\RoadRunnerBundle\DependencyInjection\PayseraRoadRunnerExtension::MONOLOG_CHANNEL' }
+        arguments:
+            $kernel: '@kernel'
+            $logger: '@Psr\Log\LoggerInterface'
+            $httpFoundationWorker: '@Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorkerInterface'
+
+    Paysera\RoadRunnerBundle\Worker\WorkerRegistryInterface:
+        public: true
+        class: Paysera\RoadRunnerBundle\Worker\WorkerRegistry
+        calls:
+            - registerWorker: [ '@Spiral\RoadRunner\Environment\Mode::MODE_HTTP', '@Paysera\RoadRunnerBundle\Worker\HttpWorker']
+            - registerWorker: [ '@Spiral\RoadRunner\Environment\Mode::MODE_GRPC', '@Paysera\RoadRunnerBundle\Worker\GrpcWorker']
+            - registerWorker: [ '@Spiral\RoadRunner\Environment\Mode::MODE_JOBS', '@Paysera\RoadRunnerBundle\Worker\Job\JobWorker']
+
+    Paysera\RoadRunnerBundle\Http\KernelHandler:
+        arguments:
+            $kernel: '@kernel'
+
+    Paysera\RoadRunnerBundle\Http\MiddlewareStack:
+        arguments:
+            $kernelHandler: '@Paysera\RoadRunnerBundle\Http\KernelHandler'
+
+    Paysera\RoadRunnerBundle\Worker\HttpDependencies:
+        public: true
+        arguments:
+            $requestHandler: '@Paysera\RoadRunnerBundle\Http\MiddlewareStack'
+            $kernelRebootStrategy: '@Paysera\RoadRunnerBundle\Reboot\KernelRebootStrategyInterface'
+            $eventDispatcher: '@Symfony\Contracts\EventDispatcher\EventDispatcherInterface'
+
+    Paysera\RoadRunnerBundle\Http\RequestHandlerInterface:
+        public: true
+        alias: Paysera\RoadRunnerBundle\Http\MiddlewareStack
+
+    Paysera\RoadRunnerBundle\Grpc\GrpcServiceProvider: ~
+
+    Spiral\RoadRunner\GRPC\Invoker: ~
+
+    Spiral\RoadRunner\GRPC\Server:
+        arguments:
+            $invoker: '@Spiral\RoadRunner\GRPC\Invoker'
+
+    Paysera\RoadRunnerBundle\Worker\GrpcWorker:
+        public: true
+        tags:
+            - { name: monolog.logger, channel: '@\Paysera\RoadRunnerBundle\DependencyInjection\PayseraRoadRunnerExtension::MONOLOG_CHANNEL' }
+        arguments:
+            $logger: '@Psr\Log\LoggerInterface'
+            $roadRunnerWorker: '@Spiral\RoadRunner\WorkerInterface'
+            $grpcServiceProvider: '@Paysera\RoadRunnerBundle\Grpc\GrpcServiceProvider'
+            $server: '@Spiral\RoadRunner\GRPC\Server'
+
+    Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandlerInterface:
+        public: true
+        class: '@Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandler'
+        arguments:
+            $logger: '@Psr\Log\LoggerInterface'
+
+    Spiral\RoadRunner\Jobs\ConsumerInterface:
+        public: true
+        class: '@Spiral\RoadRunner\Jobs\Consumer'
+        arguments:
+            $worker: '@Spiral\RoadRunner\WorkerInterface'
+
+    Paysera\RoadRunnerBundle\Worker\Job\JobWorker:
+        public: true
+        tags:
+            - { name: monolog.logger, channel: '@\Paysera\RoadRunnerBundle\DependencyInjection\PayseraRoadRunnerExtension::MONOLOG_CHANNEL' }
+        arguments:
+            $kernel: '@kernel'
+            $logger: '@Psr\Log\LoggerInterface'
+            $consumer: '@Spiral\RoadRunner\Jobs\ConsumerInterface'
+            $eventHandler: '@Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandlerInterface'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    App\Protobuf\Generated\FinanceClient:
+        factory: ['@App\Protobuf\GRPCClientFactory', 'createGRPCClient']
+        arguments:
+            $className: 'App\Protobuf\Generated\FinanceClient'
+            $hostname: '%app.finance_gRPC_host%'
+            $port: 9000
+            $credentials: 'Insecure'
