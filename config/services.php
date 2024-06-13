@@ -16,6 +16,8 @@ use Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorkerInterface;
 use Paysera\RoadRunnerBundle\Worker\GrpcWorker as InternalGrpcWorker;
 use Paysera\RoadRunnerBundle\Worker\HttpDependencies;
 use Paysera\RoadRunnerBundle\Worker\HttpWorker as InternalHttpWorker;
+use Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandler;
+use Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandlerInterface;
 use Paysera\RoadRunnerBundle\Worker\Job\JobWorker as InternalJobWorker;
 use Paysera\RoadRunnerBundle\Worker\WorkerRegistry;
 use Paysera\RoadRunnerBundle\Worker\WorkerRegistryInterface;
@@ -32,6 +34,7 @@ use Spiral\RoadRunner\Metrics\Metrics;
 use Spiral\RoadRunner\Metrics\MetricsInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
 use Spiral\RoadRunner\WorkerInterface as RoadRunnerWorkerInterface;
+use Spiral\RoadRunner\Jobs\ConsumerInterface;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -126,6 +129,19 @@ return static function (ContainerConfigurator $container) {
                 service(InternalGrpcWorker::class),
             ]);
     }
+
+    $services->set(EventHandlerInterface::class, EventHandler::class)
+        ->public();
+
+    $services->set(InternalJobWorker::class)
+        ->public() // Manually retrieved on the DIC in the Worker if the kernel has been rebooted
+        ->tag('monolog.logger', ['channel' => PayseraRoadRunnerExtension::MONOLOG_CHANNEL])
+        ->args([
+            service('kernel'),
+            service(LoggerInterface::class),
+            service(ConsumerInterface::class),
+            service(EventHandlerInterface::class),
+        ]);
 
     $services
         ->get(WorkerRegistryInterface::class)
