@@ -14,8 +14,8 @@ class EventHandler implements EventHandlerInterface
      * @param array<string, callable> $configMap
      */
     public function __construct(
-        private readonly array $configMap,
         private readonly LoggerInterface $logger,
+        private readonly array $configMap = [],
     ) {
     }
 

@@ -136,7 +136,10 @@ return static function (ContainerConfigurator $container) {
 
     // job roadrunner worker
     $services->set(EventHandlerInterface::class, EventHandler::class)
-        ->public();
+        ->public()
+        ->args([
+            service(LoggerInterface::class),
+        ]);
 
     $services->set(ConsumerInterface::class, Consumer::class)
         ->public()
