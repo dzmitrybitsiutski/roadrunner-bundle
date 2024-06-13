@@ -86,7 +86,7 @@ final class HttpWorker implements WorkerInterface
         }
     }
 
-    public function start(): void
+    public function serve(): void
     {
         $this->dependencies->getEventDispatcher()->dispatch(new WorkerStartEvent());
 

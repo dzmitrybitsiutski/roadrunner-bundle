@@ -24,7 +24,7 @@ final class GrpcWorker implements WorkerInterface
     ) {
     }
 
-    public function start(): void
+    public function serve(): void
     {
         foreach ($this->grpcServiceProvider->getRegisteredServices() as $interface => $service) {
             $this->logger->debug(

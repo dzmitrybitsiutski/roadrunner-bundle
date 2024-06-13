@@ -6,5 +6,5 @@ namespace Paysera\RoadRunnerBundle\Worker;
 
 interface WorkerInterface
 {
-    public function start(): void;
+    public function serve(): void;
 }

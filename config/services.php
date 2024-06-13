@@ -16,6 +16,7 @@ use Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorkerInterface;
 use Paysera\RoadRunnerBundle\Worker\GrpcWorker as InternalGrpcWorker;
 use Paysera\RoadRunnerBundle\Worker\HttpDependencies;
 use Paysera\RoadRunnerBundle\Worker\HttpWorker as InternalHttpWorker;
+use Paysera\RoadRunnerBundle\Worker\Job\JobWorker as InternalJobWorker;
 use Paysera\RoadRunnerBundle\Worker\WorkerRegistry;
 use Paysera\RoadRunnerBundle\Worker\WorkerRegistryInterface;
 use Psr\Log\LoggerInterface;
@@ -125,4 +126,12 @@ return static function (ContainerConfigurator $container) {
                 service(InternalGrpcWorker::class),
             ]);
     }
+
+    $services
+        ->get(WorkerRegistryInterface::class)
+        ->call('registerWorker', [
+            Environment\Mode::MODE_JOBS,
+            service(InternalJobWorker::class),
+        ]);
+
 };

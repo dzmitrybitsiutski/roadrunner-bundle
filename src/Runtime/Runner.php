@@ -30,7 +30,7 @@ class Runner implements RunnerInterface
             return 1;
         }
 
-        $worker->start();
+        $worker->serve();
 
         return 0;
     }

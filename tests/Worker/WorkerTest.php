@@ -125,7 +125,7 @@ class WorkerTest extends TestCase
 
         $this->requests->push(Request::create('http://example.org/'));
 
-        $worker->start();
+        $worker->serve();
 
         $this->assertSame(['10.0.0.1', '10.0.0.2'], Request::getTrustedProxies());
         $this->assertSame(Request::HEADER_FORWARDED, Request::getTrustedHeaderSet());
@@ -142,7 +142,7 @@ class WorkerTest extends TestCase
             $called = true;
         });
 
-        $this->worker->start();
+        $this->worker->serve();
 
         $this->assertTrue($called);
     }
@@ -175,7 +175,7 @@ class WorkerTest extends TestCase
                 $httpFoundationWorkerCalled = true;
             });
 
-        $this->worker->start();
+        $this->worker->serve();
 
         $this->assertTrue($terminated);
         $this->assertTrue($httpFoundationWorkerCalled, 'PSR Client seems to not have been called.');
@@ -202,7 +202,7 @@ class WorkerTest extends TestCase
             });
         $this->roadrunnerWorker->stop()->shouldBeCalled();
 
-        $this->worker->start();
+        $this->worker->serve();
 
         $this->assertTrue($called, WorkerStopEvent::class.' has not been dispatched');
     }
@@ -232,7 +232,7 @@ class WorkerTest extends TestCase
                 Assert::assertStringContainsString('Should be displayed', $args[0]->getContent());
             });
 
-        $this->worker->start();
+        $this->worker->serve();
 
         $this->assertTrue($called, WorkerStopEvent::class.' has not been dispatched');
     }
@@ -250,7 +250,7 @@ class WorkerTest extends TestCase
         $this->requests->push(Request::create('http://example.org/'));
 
         self::$rebootStrategyReturns = false;
-        $this->worker->start();
+        $this->worker->serve();
 
         $this->kernel->reboot()->shouldNotHaveBeenCalled();
 
@@ -263,7 +263,7 @@ class WorkerTest extends TestCase
             $rebootedEventFired = true;
         });
 
-        $this->worker->start();
+        $this->worker->serve();
 
         $this->kernel->reboot(null)->shouldHaveBeenCalled();
         $this->assertTrue($rebootedEventFired);
