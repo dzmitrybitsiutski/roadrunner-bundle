@@ -18,6 +18,7 @@ use Paysera\RoadRunnerBundle\Worker\HttpDependencies;
 use Paysera\RoadRunnerBundle\Worker\HttpWorker as InternalHttpWorker;
 use Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandler;
 use Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandlerInterface;
+use Paysera\RoadRunnerBundle\Worker\Job\Event\Serializer\Serializer;
 use Paysera\RoadRunnerBundle\Worker\Job\JobWorker as InternalJobWorker;
 use Paysera\RoadRunnerBundle\Worker\WorkerRegistry;
 use Paysera\RoadRunnerBundle\Worker\WorkerRegistryInterface;
@@ -32,9 +33,12 @@ use Spiral\RoadRunner\Http\HttpWorker;
 use Spiral\RoadRunner\Http\HttpWorkerInterface;
 use Spiral\RoadRunner\Metrics\Metrics;
 use Spiral\RoadRunner\Metrics\MetricsInterface;
+use Spiral\RoadRunner\Worker;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
 use Spiral\RoadRunner\WorkerInterface as RoadRunnerWorkerInterface;
 use Spiral\RoadRunner\Jobs\ConsumerInterface;
+use Spiral\RoadRunner\Jobs\Consumer;
+use Spiral\RoadRunner\Jobs\Serializer\SerializerInterface;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -132,6 +136,20 @@ return static function (ContainerConfigurator $container) {
 
     $services->set(EventHandlerInterface::class, EventHandler::class)
         ->public();
+
+    $services->set(SerializerInterface::class, Serializer::class)
+        ->public()
+        ->args([
+            service(LoggerInterface::class),
+            service(EventTypeRecognizer::class),
+        ]);
+
+    $services->set(ConsumerInterface::class, Consumer::class)
+        ->public()
+        ->args([
+            Worker::create(),
+            service(SerializerInterface::class),
+        ]);
 
     $services->set(InternalJobWorker::class)
         ->public() // Manually retrieved on the DIC in the Worker if the kernel has been rebooted
