@@ -15,12 +15,14 @@ services:
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
 
+    Spiral\RoadRunner\Environment: ~
+
     Spiral\RoadRunner\EnvironmentInterface:
-        factory: ['@Spiral\RoadRunner\Environment', 'fromGlobals']
+        factory: [ '@Spiral\RoadRunner\Environment', 'fromGlobals' ]
 
     Spiral\RoadRunner\WorkerInterface:
-        class: Spiral\RoadRunner\Worker
-        factory: ['@Spiral\RoadRunner\Worker', 'createFromEnvironment']
+        autowire: true
+        factory: [ Spiral\RoadRunner\Worker, 'createFromEnvironment' ]
         arguments:
             $env: '@Spiral\RoadRunner\EnvironmentInterface'
             $interceptSideEffects: '%paysera_road_runner.intercept_side_effect%'
@@ -34,16 +36,17 @@ services:
     Spiral\Goridge\RPC\RPCInterface:
         factory: [ '@Paysera\RoadRunnerBundle\Helpers\RPCFactory', 'fromEnvironment' ]
         arguments:
-            $env: '@Spiral\RoadRunner\EnvironmentInterface'
+            $environment: '@Spiral\RoadRunner\EnvironmentInterface'
 
     Spiral\RoadRunner\Metrics\MetricsInterface:
         class: Spiral\RoadRunner\Metrics\Metrics
         arguments:
-            $worker: '@Spiral\Goridge\RPC\RPCInterface'
+            $rpc: '@Spiral\Goridge\RPC\RPCInterface'
 
     Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorkerInterface:
         class: Paysera\RoadRunnerBundle\RoadRunnerBridge\HttpFoundationWorker
-        arguments: '@Spiral\RoadRunner\Http\HttpWorkerInterface'
+        arguments:
+            $httpWorker: '@Spiral\RoadRunner\Http\HttpWorkerInterface'
 
     Paysera\RoadRunnerBundle\Worker\HttpWorker:
         public: true
@@ -58,9 +61,9 @@ services:
         public: true
         class: Paysera\RoadRunnerBundle\Worker\WorkerRegistry
         calls:
-            - registerWorker: [ '@Spiral\RoadRunner\Environment\Mode::MODE_HTTP', '@Paysera\RoadRunnerBundle\Worker\HttpWorker']
-            - registerWorker: [ '@Spiral\RoadRunner\Environment\Mode::MODE_GRPC', '@Paysera\RoadRunnerBundle\Worker\GrpcWorker']
-            - registerWorker: [ '@Spiral\RoadRunner\Environment\Mode::MODE_JOBS', '@Paysera\RoadRunnerBundle\Worker\Job\JobWorker']
+            - registerWorker: [ 'http', '@Paysera\RoadRunnerBundle\Worker\HttpWorker' ]
+            - registerWorker: [ 'grpc', '@Paysera\RoadRunnerBundle\Worker\GrpcWorker' ]
+            - registerWorker: [ 'jobs', '@Paysera\RoadRunnerBundle\Worker\Job\JobWorker' ]
 
     Paysera\RoadRunnerBundle\Http\KernelHandler:
         arguments:
@@ -101,13 +104,13 @@ services:
 
     Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandlerInterface:
         public: true
-        class: '@Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandler'
+        class: Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandler
         arguments:
             $logger: '@Psr\Log\LoggerInterface'
 
     Spiral\RoadRunner\Jobs\ConsumerInterface:
         public: true
-        class: '@Spiral\RoadRunner\Jobs\Consumer'
+        class: Spiral\RoadRunner\Jobs\Consumer
         arguments:
             $worker: '@Spiral\RoadRunner\WorkerInterface'
 
@@ -120,6 +123,10 @@ services:
             $logger: '@Psr\Log\LoggerInterface'
             $consumer: '@Spiral\RoadRunner\Jobs\ConsumerInterface'
             $eventHandler: '@Paysera\RoadRunnerBundle\Worker\Job\Event\Handler\EventHandlerInterface'
+
+    Sentry\State\HubInterface:
+        public: true
+        class: Sentry\State\Hub
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

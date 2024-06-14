@@ -12,8 +12,8 @@ class Runner implements RunnerInterface
 {
     public function __construct(
         private KernelInterface $kernel,
-        private string $mode)
-    {
+        private string $mode
+    ) {
     }
 
     public function run(): int
@@ -25,12 +25,22 @@ class Runner implements RunnerInterface
         $worker = $registry->getWorker($this->mode);
 
         if (null === $worker) {
-            error_log(sprintf('Missing RR worker implementation for %s mode', $this->mode));
+            error_log(
+                sprintf('Missing RR worker implementation for %s mode', $this->mode)
+            );
 
             return 1;
         }
 
-        $worker->serve();
+        try {
+            $worker->serve();
+        } catch (\Throwable $e) {
+            error_log(
+                sprintf('Error during request processing for %s mode. Error: %s', $this->mode, $e->getMessage())
+            );
+
+            return 1;
+        }
 
         return 0;
     }
